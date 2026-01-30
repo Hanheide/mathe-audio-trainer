@@ -36,7 +36,7 @@
 
     <p id="status">Drücke Start.</p>
 
-    <input id="answer" disabled placeholder="Ergebnis" />
+    <input id="answer" type="text" placeholder="Ergebnis eingeben" disabled />
     <button id="start">Start</button>
     <button id="repeat" disabled>Wiederholen</button>
 
@@ -44,28 +44,45 @@
     <ol id="leaderboard"></ol>
   </main>
 
-  <!-- 🔥 FIREBASE (nur hier!) -->
+  <!-- 🔥 FIREBASE + FIRESTORE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
     import {
-      getFirestore, collection, addDoc, getDocs,
-      query, where, orderBy, limit, serverTimestamp
+      getFirestore,
+      collection,
+      addDoc,
+      getDocs,
+      query,
+      where,
+      orderBy,
+      limit,
+      serverTimestamp
     } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
-      apiKey: "HIER_DEIN_API_KEY",
-      authDomain: "HIER_DEIN_PROJECT.firebaseapp.com",
-      projectId: "HIER_DEIN_PROJECT",
-      storageBucket: "HIER_DEIN_PROJECT.appspot.com",
-      messagingSenderId: "XXXX",
-      appId: "XXXX"
+      apiKey: "AIzaSyBw0be3M9Sq1ADmwpG94kKpt5NOzRFANXg",
+      authDomain: "mathe-audio-trainer-web.firebaseapp.com",
+      projectId: "mathe-audio-trainer-web",
+      storageBucket: "mathe-audio-trainer-web.firebasestorage.app",
+      messagingSenderId: "711425057839",
+      appId: "1:711425057839:web:eb7ca71c90aeac3ece12da"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // global für app.js
     window.db = db;
-    window.fs = { collection, addDoc, getDocs, query, where, orderBy, limit, serverTimestamp };
+    window.fs = {
+      collection,
+      addDoc,
+      getDocs,
+      query,
+      where,
+      orderBy,
+      limit,
+      serverTimestamp
+    };
 
     console.log("🔥 Firebase bereit");
   </script>
