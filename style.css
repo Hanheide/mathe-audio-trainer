@@ -1,32 +1,21 @@
 body {
   font-family: system-ui, sans-serif;
-  background: #f4f6fa;
-  margin: 0;
+  background: #f2f4f8;
   padding: 20px;
 }
 
 .card {
-  max-width: 650px;
+  max-width: 500px;
   margin: auto;
   background: white;
   padding: 20px;
-  border-radius: 14px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-}
-
-.settings label {
-  display: block;
-  margin-bottom: 10px;
-}
-
-.row {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
+  border-radius: 12px;
 }
 
 input, button, select {
-  padding: 8px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
   font-size: 16px;
 }
 
@@ -34,19 +23,6 @@ button {
   cursor: pointer;
 }
 
-.stats, .time-box {
-  margin-top: 10px;
-}
-
-.leaderboard {
-  margin-top: 20px;
-}
-
-.leaderboard li {
+#leaderboard li {
   margin: 6px 0;
-}
-
-.hint {
-  margin-top: 10px;
-  color: #666;
 }
