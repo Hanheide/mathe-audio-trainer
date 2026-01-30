@@ -1,22 +1,67 @@
 // ===============================
-// Firestore Verbindung TEST
+// Firestore Scoreboard
 // ===============================
 
 const { collection, addDoc, serverTimestamp } = window.firestoreHelpers;
 const db = window.db;
 
-console.log("🔥 app.js läuft und hat Zugriff auf Firestore");
+// Einstellungen
+const MIN_TASKS_FOR_SCORE = 10;
 
-async function testWrite() {
-  try {
-    await addDoc(collection(db, "test"), {
-      msg: "Hallo Firestore!",
-      time: serverTimestamp()
-    });
-    console.log("✅ Test-Dokument erfolgreich gespeichert");
-  } catch (e) {
-    console.error("❌ Fehler beim Schreiben:", e);
+// Session-Daten
+let solvedTasks = 0;
+let totalTime = 0;
+
+// Diese Funktion rufst du AUF,
+// wenn eine Aufgabe RICHTIG gelöst wurde
+function registerSolvedTask(timeInSeconds) {
+  solvedTasks++;
+  totalTime += timeInSeconds;
+
+  console.log(`🧮 Aufgabe ${solvedTasks}/${MIN_TASKS_FOR_SCORE}`);
+
+  if (solvedTasks >= MIN_TASKS_FOR_SCORE) {
+    saveScore();
+    resetSession();
   }
 }
 
-testWrite();
+// Score speichern
+async function saveScore() {
+  const avgTime = totalTime / solvedTasks;
+  const mode = document.getElementById("mode").value;
+
+  const name =
+    localStorage.getItem("playerName") ||
+    prompt("Name für die Bestenliste:");
+
+  if (!name) return;
+
+  localStorage.setItem("playerName", name);
+
+  try {
+    await addDoc(collection(db, "scores"), {
+      name,
+      mode,
+      avgTime: Number(avgTime.toFixed(2)),
+      tasks: solvedTasks,
+      createdAt: serverTimestamp()
+    });
+
+    alert("🏆 Score gespeichert!");
+    console.log("✅ Score gespeichert");
+  } catch (e) {
+    console.error("❌ Fehler beim Speichern:", e);
+  }
+}
+
+// Runde zurücksetzen
+function resetSession() {
+  solvedTasks = 0;
+  totalTime = 0;
+}
+
+// 🔧 EXPORT FÜR DEIN SPIEL
+window.scoreboard = {
+  registerSolvedTask
+};
