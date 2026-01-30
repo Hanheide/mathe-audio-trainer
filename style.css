@@ -1,116 +1,81 @@
-body {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  background: #f5f5f7;
-  margin: 0;
-  padding: 24px;
-}
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mathe Audio Trainer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="card">
+    <h1>Mathe Audio Trainer</h1>
 
-.card {
-  max-width: 720px;
-  margin: 0 auto;
-  background: #fff;
-  border-radius: 16px;
-  padding: 26px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-}
+    <section class="settings">
+      <label>
+        Modus:
+        <select id="mode">
+          <option value="add">Addition</option>
+          <option value="sub">Subtraktion</option>
+          <option value="mul">Multiplikation</option>
+          <option value="div">Division</option>
+          <option value="addsub">Addition + Subtraktion</option>
+          <option value="muldiv">Multiplikation + Division</option>
+        </select>
+      </label>
 
-.settings label {
-  display: block;
-  margin: 10px 0;
-}
+      <label>
+        Zahlenbereich:
+        <select id="range">
+          <option value="10">0–10</option>
+          <option value="20">0–20</option>
+          <option value="50">0–50</option>
+          <option value="100">0–100</option>
+        </select>
+      </label>
 
-.row {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
+      <label>
+        Sprechtempo:
+        <input type="range" id="rate" min="0.7" max="1.3" step="0.05" value="1.0" />
+        <span id="rateVal">1.0</span>
+      </label>
+    </section>
 
-input {
-  flex: 1;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  font-size: 16px;
-}
+    <section class="task">
+      <p id="status">Drücke Start.</p>
 
-button {
-  padding: 10px 14px;
-  border: 0;
-  border-radius: 10px;
-  background: #2f6fed;
-  color: #fff;
-  cursor: pointer;
-  font-size: 16px;
-}
+      <div class="row">
+        <input id="answer" type="text" inputmode="numeric" placeholder="Ergebnis eingeben" disabled />
+        <button id="submit" disabled>OK</button>
+      </div>
 
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+      <div class="row">
+        <button id="start">Start</button>
+        <button id="repeat" disabled>Wiederholen</button>
+      </div>
+    </section>
 
-.stats {
-  margin-top: 12px;
-  display: flex;
-  gap: 18px;
-  font-size: 14px;
-}
+    <section class="stats">
+      <div>Richtig: <span id="correct">0</span></div>
+      <div>Falsch: <span id="wrong">0</span></div>
+      <div>Streak: <span id="streak">0</span></div>
+    </section>
 
-.time-box {
-  margin-top: 10px;
-  text-align: right;
-  font-size: 14px;
-  color: #333;
-}
+    <div class="time-box">
+      <span id="time">Zeit: 0.00 s</span> |
+      <span id="avg">Ø: 0.00 s</span>
+    </div>
 
-.hint {
-  margin-top: 12px;
-  color: #666;
-  font-size: 14px;
-}
+    <hr />
 
-/* ✅ NUR HINZU: Bestenliste */
-.leaderboard {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid #eee;
-}
+    <h2>🏆 Bestenliste</h2>
+    <p id="lb-mode"></p>
+    <ol id="leaderboard-list"></ol>
+    <p id="lb-error" class="hint"></p>
 
-.lb-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+    <p class="hint">Enter = prüfen · Space = wiederholen</p>
+  </main>
 
-.lb-title h2 {
-  margin: 0;
-  font-size: 22px;
-}
-
-.trophy {
-  font-size: 22px;
-}
-
-.lb-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 13px;
-  color: #555;
-  margin: 8px 0 6px;
-}
-
-#leaderboard-list {
-  padding-left: 18px;
-  margin: 8px 0 0;
-}
-
-#leaderboard-list li {
-  margin: 6px 0;
-  font-size: 14px;
-}
-
-.lb-error {
-  margin-top: 8px;
-  font-size: 13px;
-  color: #b00020;
-}
+  <!-- Firebase + App -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
