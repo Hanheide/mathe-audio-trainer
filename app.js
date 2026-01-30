@@ -1,184 +1,115 @@
-// ===============================
-// Mathe Audio Trainer – Logik + Scoreboard
-// ===============================
-
-// ===== Firestore Zugriff =====
-const { collection, addDoc, serverTimestamp } = window.firestoreHelpers;
+const { collection, addDoc, getDocs, query, where, orderBy, limit, serverTimestamp } =
+  window.firestoreHelpers;
 const db = window.db;
 
-// ===== Scoreboard-Logik =====
-const MIN_TASKS_FOR_SCORE = 10;
-let solvedTasks = 0;
+const MIN_TASKS = 10;
+let solved = 0;
 let totalTime = 0;
+let startTime = 0;
+let correctResult = 0;
 
-function generateRandomName() {
-  const adjectives = [
-    "Schneller", "Cleverer", "Schlauer", "Mutiger",
-    "Blauer", "Roter", "Starker", "Leiser"
-  ];
-  const animals = [
-    "Fuchs", "Tiger", "Panda", "Wolf",
-    "Adler", "Löwe", "Bär", "Delfin"
-  ];
-
-  const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-  const animal = animals[Math.floor(Math.random() * animals.length)];
-  const number = Math.floor(Math.random() * 900) + 100;
-
-  return `${adj}${animal}_${number}`;
-}
-
-async function saveScore() {
-  const avgTime = totalTime / solvedTasks;
-  const mode = document.getElementById("mode").value;
-
-  const name =
-    localStorage.getItem("playerName") || generateRandomName();
-
-  localStorage.setItem("playerName", name);
-
-  try {
-    await addDoc(collection(db, "scores"), {
-      name,
-      mode,
-      avgTime: Number(avgTime.toFixed(2)),
-      tasks: solvedTasks,
-      createdAt: serverTimestamp()
-    });
-
-    console.log("🏆 Score gespeichert");
-    alert("🏆 Score gespeichert!");
-  } catch (e) {
-    console.error("❌ Fehler beim Speichern:", e);
-  }
-}
-
-function registerSolvedTask(timeInSeconds) {
-  solvedTasks++;
-  totalTime += timeInSeconds;
-
-  console.log(`🧮 Aufgabe ${solvedTasks}/${MIN_TASKS_FOR_SCORE}`);
-
-  if (solvedTasks >= MIN_TASKS_FOR_SCORE) {
-    saveScore();
-    solvedTasks = 0;
-    totalTime = 0;
-  }
-}
-
-// ===== Spiel-Logik =====
-const modeSelect = document.getElementById("mode");
-const rangeSelect = document.getElementById("range");
-const answerInput = document.getElementById("answer");
-const submitBtn = document.getElementById("submit");
+const answer = document.getElementById("answer");
+const submit = document.getElementById("submit");
 const startBtn = document.getElementById("start");
 const repeatBtn = document.getElementById("repeat");
-const statusEl = document.getElementById("status");
+const status = document.getElementById("status");
+const modeSel = document.getElementById("mode");
+const rangeSel = document.getElementById("range");
 
-let a = 0;
-let b = 0;
-let correctResult = 0;
-let startTime = 0;
+function randomName() {
+  const a = ["Schneller","Cleverer","Starker","Schlauer"];
+  const b = ["Fuchs","Tiger","Wolf","Adler"];
+  return `${a[Math.floor(Math.random()*a.length)]}${b[Math.floor(Math.random()*b.length)]}_${Math.floor(Math.random()*900+100)}`;
+}
 
-function random(max) {
-  return Math.floor(Math.random() * (max + 1));
+function speak(text) {
+  speechSynthesis.cancel();
+  speechSynthesis.speak(new SpeechSynthesisUtterance(text));
 }
 
 function nextTask() {
-  const range = Number(rangeSelect.value);
-  const mode = modeSelect.value;
+  const r = Number(rangeSel.value);
+  const m = modeSel.value;
+  let a = Math.floor(Math.random()*r);
+  let b = Math.floor(Math.random()*r);
 
-  a = random(range);
-  b = random(range);
-
-  switch (mode) {
-    case "add":
-      correctResult = a + b;
-      speak(`${a} plus ${b}`);
-      break;
-    case "sub":
-      correctResult = a - b;
-      speak(`${a} minus ${b}`);
-      break;
-    case "mul":
-      correctResult = a * b;
-      speak(`${a} mal ${b}`);
-      break;
-    case "div":
-      b = b === 0 ? 1 : b;
-      correctResult = Math.floor(a / b);
-      a = correctResult * b;
-      speak(`${a} geteilt durch ${b}`);
-      break;
-    case "addsub":
-      if (Math.random() < 0.5) {
-        correctResult = a + b;
-        speak(`${a} plus ${b}`);
-      } else {
-        correctResult = a - b;
-        speak(`${a} minus ${b}`);
-      }
-      break;
-    case "muldiv":
-      if (Math.random() < 0.5) {
-        correctResult = a * b;
-        speak(`${a} mal ${b}`);
-      } else {
-        b = b === 0 ? 1 : b;
-        correctResult = Math.floor(a / b);
-        a = correctResult * b;
-        speak(`${a} geteilt durch ${b}`);
-      }
-      break;
-  }
+  if (m === "add") correctResult = a+b, speak(`${a} plus ${b}`);
+  if (m === "sub") correctResult = a-b, speak(`${a} minus ${b}`);
+  if (m === "mul") correctResult = a*b, speak(`${a} mal ${b}`);
+  if (m === "div") { b=b||1; correctResult=Math.floor(a/b); a=correctResult*b; speak(`${a} geteilt durch ${b}`); }
+  if (m === "addsub") Math.random()<0.5 ? (correctResult=a+b,speak(`${a} plus ${b}`)) : (correctResult=a-b,speak(`${a} minus ${b}`));
+  if (m === "muldiv") Math.random()<0.5 ? (correctResult=a*b,speak(`${a} mal ${b}`)) : (b=b||1,correctResult=Math.floor(a/b),a=correctResult*b,speak(`${a} geteilt durch ${b}`));
 
   startTime = performance.now();
-  answerInput.value = "";
-  answerInput.focus();
+  answer.value = "";
+  answer.focus();
 }
 
-function checkAnswer() {
-  const userAnswer = Number(answerInput.value);
-  const timeInSeconds = (performance.now() - startTime) / 1000;
+async function saveScore() {
+  const name = localStorage.getItem("name") || randomName();
+  localStorage.setItem("name", name);
 
-  if (userAnswer === correctResult) {
-    statusEl.textContent = "✅ Richtig!";
+  await addDoc(collection(db,"scores"),{
+    name,
+    mode: modeSel.value,
+    avgTime: Number((totalTime/solved).toFixed(2)),
+    tasks: solved,
+    createdAt: serverTimestamp()
+  });
 
-    // 🔥 GENAU HIER: SCORE ZÄHLT
-    registerSolvedTask(timeInSeconds);
+  solved = 0;
+  totalTime = 0;
+  loadLeaderboard();
+}
 
+function check() {
+  const t = (performance.now()-startTime)/1000;
+  if (Number(answer.value) === correctResult) {
+    solved++;
+    totalTime += t;
+    status.textContent = "✅ Richtig";
+    if (solved >= MIN_TASKS) saveScore();
     nextTask();
   } else {
-    statusEl.textContent = "❌ Falsch";
+    status.textContent = "❌ Falsch";
   }
 }
 
-// ===== Sprachausgabe =====
-function speak(text) {
-  const utter = new SpeechSynthesisUtterance(text);
-  speechSynthesis.cancel();
-  speechSynthesis.speak(utter);
+async function loadLeaderboard() {
+  const list = document.getElementById("leaderboard-list");
+  const title = document.getElementById("lb-mode");
+  list.innerHTML = "";
+  title.textContent = `Modus: ${modeSel.value}`;
+
+  const q = query(
+    collection(db,"scores"),
+    where("mode","==",modeSel.value),
+    orderBy("avgTime"),
+    limit(10)
+  );
+
+  const snap = await getDocs(q);
+  if (snap.empty) list.innerHTML = "<li>Noch keine Einträge</li>";
+
+  let i=1;
+  snap.forEach(d=>{
+    const s=d.data();
+    const li=document.createElement("li");
+    li.textContent=`${i++}. ${s.name} – Ø ${s.avgTime}s`;
+    list.appendChild(li);
+  });
 }
 
-// ===== Events =====
-startBtn.addEventListener("click", () => {
-  answerInput.disabled = false;
-  submitBtn.disabled = false;
+startBtn.onclick = () => {
+  answer.disabled = false;
+  submit.disabled = false;
+  repeatBtn.disabled = false;
   nextTask();
-});
+  loadLeaderboard();
+};
 
-submitBtn.addEventListener("click", checkAnswer);
+submit.onclick = check;
+answer.onkeydown = e => { if (e.key==="Enter") check(); };
+modeSel.onchange = loadLeaderboard;
 
-answerInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") checkAnswer();
-  if (e.key === " ") {
-    e.preventDefault();
-    speak(`${a} und ${b}`);
-  }
-});
-
-repeatBtn.addEventListener("click", () => {
-  speak(`${a} und ${b}`);
-});
-
-console.log("🔥 app.js vollständig geladen");
+console.log("🚀 App bereit");
