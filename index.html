@@ -44,7 +44,13 @@
       <p id="status">Drücke Start.</p>
 
       <div class="row">
-        <input id="answer" type="text" inputmode="numeric" disabled />
+        <input
+          id="answer"
+          type="text"
+          inputmode="numeric"
+          placeholder="Ergebnis eingeben"
+          disabled
+        />
         <button id="submit" disabled>OK</button>
       </div>
 
@@ -65,22 +71,26 @@
       <span id="avg">Ø: 0.00 s</span>
     </div>
 
-    <!-- 🏆 NEU: BESTENLISTE -->
+    <!-- ✅ NEU: Bestenliste (Ansicht bleibt gleich, nur ergänzt) -->
     <section class="leaderboard">
       <h2>🏆 Bestenliste</h2>
-      <p id="lb-mode"></p>
-      <ol id="leaderboard-list"></ol>
+      <div class="lb-head">
+        <span id="lb-mode">Modus: -</span>
+        <span class="lb-note">Speichert nach 10 richtigen Aufgaben</span>
+      </div>
+      <ol id="leaderboard-list">
+        <li>Noch keine Einträge</li>
+      </ol>
     </section>
 
     <p class="hint">Enter = prüfen · Space = wiederholen</p>
   </main>
 
-  <!-- Firebase -->
+  <!-- Firebase / Firestore: als Module (deferred) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
     import {
-      getFirestore, collection, addDoc, getDocs,
-      query, where, orderBy, limit, serverTimestamp
+      getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -95,15 +105,14 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // global für app.js
     window.db = db;
-    window.fs = {
-      collection, addDoc, getDocs,
-      query, where, orderBy, limit, serverTimestamp
-    };
+    window.fs = { collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp };
 
     console.log("🔥 Firebase bereit");
   </script>
 
-  <script src="app.js"></script>
+  <!-- app.js wird deferred geladen (nach HTML), und wartet zusätzlich auf Firebase -->
+  <script src="app.js" defer></script>
 </body>
 </html>
