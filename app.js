@@ -1,9 +1,8 @@
 // ===============================
-// Mathe Audio Trainer (FINAL)
-// - Timer startet sicher (requestAnimationFrame)
-// - Audio spricht Operator zuverlässig (Queue + kleiner Delay)
-// - Enter = prüfen, Space = wiederholen
-// - Bestenliste pro Modus (Firestore), speichern nach 10 richtigen
+// Mathe Audio Trainer (MOBILE-FIX + Bestenliste)
+// - iOS/Android: Speech muss bei User-Gesture starten (kein setTimeout beim ersten Speak)
+// - voicesReady darf nicht blockieren
+// - Rest: wie vorher (Timer, Enter/Space, Firestore-LB nach 10 richtigen)
 // ===============================
 
 const $ = (id) => document.getElementById(id);
@@ -96,54 +95,109 @@ function elapsedSeconds() {
 }
 
 // ===============================
-// Audio (robust)
+// Audio (MOBILE-SAFE)
 // ===============================
+let audioUnlocked = false;
 let voicesReady = false;
 let speaking = false;
 const speakQueue = [];
 
-function initVoices() {
-  const v = speechSynthesis.getVoices();
-  if (v && v.length > 0) voicesReady = true;
+// versuche Stimmen zu laden (mobile manchmal erst nach Interaktion)
+function refreshVoices() {
+  try {
+    const v = speechSynthesis.getVoices();
+    if (v && v.length > 0) voicesReady = true;
+  } catch {}
 }
 speechSynthesis.onvoiceschanged = () => {
   voicesReady = true;
 };
-initVoices();
 
+refreshVoices();
+
+/**
+ * Muss im Start-Klick aufgerufen werden:
+ * - erzeugt einen "Gesture-gebundenen" Speak (leer)
+ * - markiert audioUnlocked
+ * - refresht Voices
+ */
+function unlockAudio() {
+  if (audioUnlocked) return;
+  try {
+    const u = new SpeechSynthesisUtterance(" ");
+    u.lang = "de-DE";
+    u.rate = Number(rate.value);
+    // Direkt im Klick ausführen (wichtig!)
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+    // optional sofort stoppen – reicht trotzdem zum Unlock
+    speechSynthesis.cancel();
+  } catch {}
+  audioUnlocked = true;
+  refreshVoices();
+}
+
+// Sofort sprechen (ohne Queue + ohne setTimeout) – wichtig für erste Aufgabe auf Handy
+function speakNow(text) {
+  if (!("speechSynthesis" in window)) return;
+  refreshVoices();
+  try {
+    speaking = true;
+    speechSynthesis.cancel();
+
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "de-DE";
+    u.rate = Number(rate.value);
+
+    u.onend = () => { speaking = false; processSpeakQueue(); };
+    u.onerror = () => { speaking = false; processSpeakQueue(); };
+
+    speechSynthesis.speak(u);
+  } catch {
+    speaking = false;
+  }
+}
+
+// Queue-Speak (mit kleinem Delay, aber NUR nach Unlock ok)
 function speak(text) {
   if (!("speechSynthesis" in window)) return;
+  refreshVoices();
   speakQueue.push(text);
   processSpeakQueue();
 }
 
 function processSpeakQueue() {
-  if (!voicesReady) return;
+  // NICHT mehr blockieren, wenn voicesReady false – mobile ist unzuverlässig
   if (speaking) return;
 
   const text = speakQueue.shift();
   if (!text) return;
 
   speaking = true;
-  speechSynthesis.cancel();
+  try {
+    speechSynthesis.cancel();
 
-  // kleiner Delay verhindert, dass Operatoren manchmal verschluckt werden
-  setTimeout(() => {
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "de-DE";
-    u.rate = Number(rate.value);
+    const doSpeak = () => {
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "de-DE";
+      u.rate = Number(rate.value);
 
-    u.onend = () => {
-      speaking = false;
-      processSpeakQueue();
-    };
-    u.onerror = () => {
-      speaking = false;
-      processSpeakQueue();
+      u.onend = () => { speaking = false; processSpeakQueue(); };
+      u.onerror = () => { speaking = false; processSpeakQueue(); };
+
+      speechSynthesis.speak(u);
     };
 
-    speechSynthesis.speak(u);
-  }, 120);
+    // Delay nur wenn Audio schon unlocked ist (sonst kann iOS blocken)
+    if (audioUnlocked) {
+      setTimeout(doSpeak, 120);
+    } else {
+      // Falls irgendwo doch vor Unlock aufgerufen: sofort
+      doSpeak();
+    }
+  } catch {
+    speaking = false;
+  }
 }
 
 // ===============================
@@ -186,7 +240,7 @@ function makeTask() {
   return { mode: m, text: `${a} geteilt durch ${b}`, solution: q };
 }
 
-function startNewTask() {
+function startNewTask({ immediateSpeak = false } = {}) {
   currentTask = makeTask();
 
   statusEl.textContent = "Aufgabe wird vorgelesen …";
@@ -196,7 +250,10 @@ function startNewTask() {
   setTimeUI(0);
   startTimer();
 
-  speak(currentTask.text);
+  // Für mobile: erste Aufgabe IM Start-Klick ohne Delay sprechen
+  if (immediateSpeak) speakNow(currentTask.text);
+  else speak(currentTask.text);
+
   statusEl.textContent = "Gib das Ergebnis ein.";
 }
 
@@ -227,7 +284,7 @@ function getPlayerName() {
   return name;
 }
 
-// Laden ohne where+orderBy Kombination (vermeidet Index-Probleme)
+// Laden ohne where+orderBy (vermeidet Composite Index)
 async function loadLeaderboard() {
   lbErrEl.textContent = "";
   lbModeEl.textContent = `Modus: ${modeSel.value}`;
@@ -375,6 +432,9 @@ modeSel.addEventListener("change", () => {
 });
 
 startBtn.addEventListener("click", async () => {
+  // ✅ WICHTIG: Audio auf Handy freischalten
+  unlockAudio();
+
   answerEl.disabled = false;
   submitBtn.disabled = false;
   repeatBtn.disabled = false;
@@ -386,7 +446,8 @@ startBtn.addEventListener("click", async () => {
     lbErrEl.textContent = "Bestenliste: Firebase noch nicht bereit (oder Regeln blockieren).";
   }
 
-  startNewTask();
+  // ✅ Erste Aufgabe direkt im Klick sprechen (iOS/Android)
+  startNewTask({ immediateSpeak: true });
 });
 
 // Initial UI
