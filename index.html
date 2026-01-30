@@ -71,11 +71,51 @@
       <span id="avg">Ø: 0.00 s</span>
     </div>
 
-    <p class="hint">
-      Enter = prüfen · Space = wiederholen
-    </p>
+    <!-- ✅ NUR HINZU: Bestenliste -->
+    <section class="leaderboard">
+      <div class="lb-title">
+        <span class="trophy">🏆</span>
+        <h2>Bestenliste</h2>
+      </div>
+      <div class="lb-head">
+        <span id="lb-mode">Modus: -</span>
+        <span class="lb-note">Speichert nach 10 richtigen Aufgaben</span>
+      </div>
+      <ol id="leaderboard-list">
+        <li>Noch keine Einträge</li>
+      </ol>
+      <div id="lb-error" class="lb-error"></div>
+    </section>
+
+    <p class="hint">Enter = prüfen · Space = wiederholen</p>
   </main>
 
-  <script src="app.js"></script>
+  <!-- Firebase / Firestore -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, getDocs,
+      query, orderBy, limit, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBw0be3M9Sq1ADmwpG94kKpt5NOzRFANXg",
+      authDomain: "mathe-audio-trainer-web.firebaseapp.com",
+      projectId: "mathe-audio-trainer-web",
+      storageBucket: "mathe-audio-trainer-web.firebasestorage.app",
+      messagingSenderId: "711425057839",
+      appId: "1:711425057839:web:eb7ca71c90aeac3ece12da"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.db = db;
+    window.fs = { collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp };
+
+    console.log("🔥 Firebase bereit");
+  </script>
+
+  <script src="app.js" defer></script>
 </body>
 </html>
