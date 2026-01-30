@@ -6,28 +6,23 @@ body {
 }
 
 .card {
-  max-width: 640px;
+  max-width: 720px;
   margin: 0 auto;
-  background: white;
+  background: #fff;
   border-radius: 16px;
-  padding: 20px;
+  padding: 26px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
-.settings {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-
-.task {
-  margin: 12px 0;
+.settings label {
+  display: block;
+  margin: 10px 0;
 }
 
 .row {
   display: flex;
   gap: 10px;
-  margin: 10px 0;
+  margin-top: 10px;
 }
 
 input {
@@ -39,17 +34,13 @@ input {
 }
 
 button {
-  padding: 10px 12px;
+  padding: 10px 14px;
   border: 0;
   border-radius: 10px;
   background: #2f6fed;
-  color: white;
+  color: #fff;
   cursor: pointer;
   font-size: 16px;
-}
-
-button:hover:not(:disabled) {
-  background: #2559c7;
 }
 
 button:disabled {
@@ -58,21 +49,68 @@ button:disabled {
 }
 
 .stats {
+  margin-top: 12px;
   display: flex;
   gap: 18px;
-  margin-top: 14px;
   font-size: 14px;
 }
 
 .time-box {
-  margin-top: 12px;
+  margin-top: 10px;
   text-align: right;
   font-size: 14px;
   color: #333;
 }
 
 .hint {
+  margin-top: 12px;
   color: #666;
   font-size: 14px;
-  margin-top: 12px;
+}
+
+/* ✅ NUR HINZU: Bestenliste */
+.leaderboard {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #eee;
+}
+
+.lb-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lb-title h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.trophy {
+  font-size: 22px;
+}
+
+.lb-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: #555;
+  margin: 8px 0 6px;
+}
+
+#leaderboard-list {
+  padding-left: 18px;
+  margin: 8px 0 0;
+}
+
+#leaderboard-list li {
+  margin: 6px 0;
+  font-size: 14px;
+}
+
+.lb-error {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #b00020;
 }
