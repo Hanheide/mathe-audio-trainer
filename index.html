@@ -44,13 +44,7 @@
       <p id="status">Drücke Start.</p>
 
       <div class="row">
-        <input
-          id="answer"
-          type="text"
-          inputmode="numeric"
-          placeholder="Ergebnis eingeben"
-          disabled
-        />
+        <input id="answer" type="text" inputmode="numeric" placeholder="Ergebnis" disabled />
         <button id="submit" disabled>OK</button>
       </div>
 
@@ -62,7 +56,6 @@
 
     <section class="stats">
       <div>Richtig: <span id="correct">0</span></div>
-      <div>Falsch: <span id="wrong">0</span></div>
       <div>Streak: <span id="streak">0</span></div>
     </section>
 
@@ -71,56 +64,44 @@
       <span id="avg">Ø: 0.00 s</span>
     </div>
 
-    <p class="hint">
-      Enter = prüfen · Space = wiederholen
-    </p>
+    <section class="leaderboard">
+      <h2>🏆 Bestenliste</h2>
+      <p id="lb-mode"></p>
+      <ol id="leaderboard-list"></ol>
+    </section>
+
+    <p class="hint">Enter = prüfen · Space = wiederholen</p>
   </main>
 
-  <!-- 🔥 FIREBASE + FIRESTORE (Browser, kein npm) -->
+  <!-- 🔥 FIREBASE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
     import {
-      getFirestore,
-      collection,
-      addDoc,
-      getDocs,
-      query,
-      where,
-      orderBy,
-      limit,
-      serverTimestamp
+      getFirestore, collection, addDoc, getDocs,
+      query, where, orderBy, limit, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyBw0be3M9Sq1ADmwpG94kKpt5NOzRFANXg",
-      authDomain: "mathe-audio-trainer-web.firebaseapp.com",
-      projectId: "mathe-audio-trainer-web",
-      storageBucket: "mathe-audio-trainer-web.firebasestorage.app",
-      messagingSenderId: "711425057839",
-      appId: "1:711425057839:web:eb7ca71c90aeac3ece12da"
+      apiKey: "DEIN_API_KEY",
+      authDomain: "DEIN_PROJECT.firebaseapp.com",
+      projectId: "DEIN_PROJECT",
+      storageBucket: "DEIN_PROJECT.appspot.com",
+      messagingSenderId: "XXXX",
+      appId: "XXXX"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Für app.js global verfügbar
     window.db = db;
     window.firestoreHelpers = {
-      collection,
-      addDoc,
-      getDocs,
-      query,
-      where,
-      orderBy,
-      limit,
-      serverTimestamp
+      collection, addDoc, getDocs,
+      query, where, orderBy, limit, serverTimestamp
     };
 
-    console.log("🔥 Firebase + Firestore verbunden");
+    console.log("🔥 Firebase verbunden");
   </script>
 
-  <!-- DEIN LOGIK-CODE -->
-  <script type="module" src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
-
