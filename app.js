@@ -36,15 +36,15 @@ let correct = 0;
 let wrong = 0;
 let streak = 0;
 
-// -------- Timing (für Anzeige pro Aufgabe)
+// -------- Timing (Anzeige pro Aufgabe)
 let startTime = 0;
 let rafId = 0;
 
-// -------- Durchschnitt (über alle richtigen Antworten bisher)
+// -------- Durchschnitt (über alle richtigen Antworten)
 let totalSolvedTime = 0;
 let totalSolvedCount = 0;
 
-// -------- Scoreboard Session (nur für Firestore, nach 10 richtigen Aufgaben)
+// -------- Scoreboard Session (für Firestore, nach 10 richtigen Aufgaben)
 const MIN_TASKS_FOR_SCORE = 10;
 let sessionSolvedTime = 0;
 let sessionSolvedCount = 0;
@@ -125,7 +125,7 @@ function processSpeakQueue() {
   speaking = true;
   speechSynthesis.cancel();
 
-  // kleiner Delay verhindert, dass Operator manchmal "verschluckt" wird
+  // kleiner Delay verhindert "verschluckte" Operatoren
   setTimeout(() => {
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "de-DE";
@@ -161,27 +161,27 @@ function makeTask() {
   if (m === "add") {
     const a = randInt(0, max);
     const b = randInt(0, max);
-    return { mode: m, a, b, text: `${a} plus ${b}`, solution: a + b };
+    return { mode: m, text: `${a} plus ${b}`, solution: a + b };
   }
 
   if (m === "sub") {
     let a = randInt(0, max);
     let b = randInt(0, max);
     if (b > a) [a, b] = [b, a];
-    return { mode: m, a, b, text: `${a} minus ${b}`, solution: a - b };
+    return { mode: m, text: `${a} minus ${b}`, solution: a - b };
   }
 
   if (m === "mul") {
     const a = randInt(0, max);
     const b = randInt(0, max);
-    return { mode: m, a, b, text: `${a} mal ${b}`, solution: a * b };
+    return { mode: m, text: `${a} mal ${b}`, solution: a * b };
   }
 
   // div ohne Rest
   const b = randInt(1, Math.max(1, Math.floor(max / 2)));
   const q = randInt(0, max);
   const a = b * q;
-  return { mode: m, a, b, text: `${a} geteilt durch ${b}`, solution: q };
+  return { mode: m, text: `${a} geteilt durch ${b}`, solution: q };
 }
 
 function startNewTask() {
@@ -194,7 +194,6 @@ function startNewTask() {
   setTimeUI(0);
   startTimer();
 
-  // Audio + Status
   speak(currentTask.text);
   statusEl.textContent = "Gib das Ergebnis ein.";
 }
@@ -221,12 +220,12 @@ function getPlayerName() {
   const adj = ["Schneller", "Cleverer", "Schlauer", "Starker", "Mutiger", "Ruhiger"];
   const ani = ["Fuchs", "Tiger", "Wolf", "Adler", "Bär", "Delfin"];
   const name = `${adj[randInt(0, adj.length - 1)]}${ani[randInt(0, ani.length - 1)]}_${randInt(100, 999)}`;
+
   localStorage.setItem("playerName", name);
   return name;
 }
 
-// Bestenliste: keine where+orderBy (vermeidet Index-Probleme)
-// Wir holen "schnellste" global und filtern clientseitig nach Mode.
+// Bestenliste ohne where+orderBy (vermeidet Index-Probleme)
 async function loadLeaderboard() {
   lbErrEl.textContent = "";
   lbModeEl.textContent = `Modus: ${modeSel.value}`;
@@ -289,7 +288,6 @@ async function saveScoreAfter10() {
       createdAt: window.fs.serverTimestamp()
     });
 
-    // Session reset
     sessionSolvedTime = 0;
     sessionSolvedCount = 0;
 
@@ -314,39 +312,31 @@ function checkAnswer() {
   }
 
   if (val === currentTask.solution) {
-    // richtig
     const t = elapsedSeconds();
 
     correct++;
     streak++;
     updateStats();
 
-    // global average
     totalSolvedTime += t;
     totalSolvedCount++;
     setAvgUI();
 
-    // scoreboard session (für Firestore)
     sessionSolvedTime += t;
     sessionSolvedCount++;
 
     speak("Richtig.");
 
-    // nächste Aufgabe
     if (sessionSolvedCount >= MIN_TASKS_FOR_SCORE) {
-      saveScoreAfter10().finally(() => {
-        startNewTask();
-      });
+      saveScoreAfter10().finally(() => startNewTask());
     } else {
       startNewTask();
     }
   } else {
-    // falsch
     wrong++;
     streak = 0;
     updateStats();
     speak("Falsch.");
-    // Timer läuft weiter (wie vorher üblich)
   }
 }
 
@@ -375,7 +365,6 @@ repeatBtn.addEventListener("click", () => {
 });
 
 modeSel.addEventListener("change", () => {
-  // optional: Session reset, damit 10 Aufgaben pro Modus sauber sind
   sessionSolvedTime = 0;
   sessionSolvedCount = 0;
   loadLeaderboard();
@@ -386,14 +375,11 @@ startBtn.addEventListener("click", async () => {
   submitBtn.disabled = false;
   repeatBtn.disabled = false;
 
-  // Firebase kann etwas später kommen -> wir starten das Spiel sofort
-  // und laden die LB sobald Firebase bereit ist.
   try {
     await waitForFirebaseReady();
     await loadLeaderboard();
-  } catch (e) {
-    console.warn("⚠️ Firebase nicht rechtzeitig bereit – Bestenliste später.");
-    lbErrEl.textContent = "Bestenliste: Firebase noch nicht bereit.";
+  } catch {
+    lbErrEl.textContent = "Bestenliste: Firebase noch nicht bereit (oder Regeln blockieren).";
   }
 
   startNewTask();
