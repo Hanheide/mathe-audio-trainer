@@ -32,48 +32,19 @@
           <option value="100">0–100</option>
         </select>
       </label>
-
-      <label>
-        Sprechtempo:
-        <input type="range" id="rate" min="0.7" max="1.3" step="0.05" value="1.0" />
-        <span id="rateVal">1.0</span>
-      </label>
     </section>
 
-    <section class="task">
-      <p id="status">Drücke Start.</p>
+    <p id="status">Drücke Start.</p>
 
-      <div class="row">
-        <input id="answer" type="text" inputmode="numeric" placeholder="Ergebnis" disabled />
-        <button id="submit" disabled>OK</button>
-      </div>
+    <input id="answer" disabled placeholder="Ergebnis" />
+    <button id="start">Start</button>
+    <button id="repeat" disabled>Wiederholen</button>
 
-      <div class="row">
-        <button id="start">Start</button>
-        <button id="repeat" disabled>Wiederholen</button>
-      </div>
-    </section>
-
-    <section class="stats">
-      <div>Richtig: <span id="correct">0</span></div>
-      <div>Streak: <span id="streak">0</span></div>
-    </section>
-
-    <div class="time-box">
-      <span id="time">Zeit: 0.00 s</span> |
-      <span id="avg">Ø: 0.00 s</span>
-    </div>
-
-    <section class="leaderboard">
-      <h2>🏆 Bestenliste</h2>
-      <p id="lb-mode"></p>
-      <ol id="leaderboard-list"></ol>
-    </section>
-
-    <p class="hint">Enter = prüfen · Space = wiederholen</p>
+    <h2>🏆 Bestenliste</h2>
+    <ol id="leaderboard"></ol>
   </main>
 
-  <!-- 🔥 FIREBASE -->
+  <!-- 🔥 FIREBASE (nur hier!) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
     import {
@@ -82,10 +53,10 @@
     } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
-      apiKey: "DEIN_API_KEY",
-      authDomain: "DEIN_PROJECT.firebaseapp.com",
-      projectId: "DEIN_PROJECT",
-      storageBucket: "DEIN_PROJECT.appspot.com",
+      apiKey: "HIER_DEIN_API_KEY",
+      authDomain: "HIER_DEIN_PROJECT.firebaseapp.com",
+      projectId: "HIER_DEIN_PROJECT",
+      storageBucket: "HIER_DEIN_PROJECT.appspot.com",
       messagingSenderId: "XXXX",
       appId: "XXXX"
     };
@@ -94,12 +65,9 @@
     const db = getFirestore(app);
 
     window.db = db;
-    window.firestoreHelpers = {
-      collection, addDoc, getDocs,
-      query, where, orderBy, limit, serverTimestamp
-    };
+    window.fs = { collection, addDoc, getDocs, query, where, orderBy, limit, serverTimestamp };
 
-    console.log("🔥 Firebase verbunden");
+    console.log("🔥 Firebase bereit");
   </script>
 
   <script src="app.js"></script>
