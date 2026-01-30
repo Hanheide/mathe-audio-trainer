@@ -1,15 +1,12 @@
 // ===============================
-// Firebase Firestore TEST
+// Firestore Verbindung TEST
 // ===============================
 
-import { getFirestore, collection, addDoc, serverTimestamp } 
-  from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+const { collection, addDoc, serverTimestamp } = window.firestoreHelpers;
+const db = window.db;
 
-const db = getFirestore();
+console.log("🔥 app.js läuft und hat Zugriff auf Firestore");
 
-console.log("🔥 Firebase + Firestore verbunden");
-
-// Test-Datensatz schreiben
 async function testWrite() {
   try {
     await addDoc(collection(db, "test"), {
@@ -22,5 +19,4 @@ async function testWrite() {
   }
 }
 
-// Beim Laden der Seite ausführen
 testWrite();
