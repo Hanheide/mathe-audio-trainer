@@ -1,10 +1,9 @@
 // ===============================
 // Mathe Audio Trainer (FINAL)
 // - Timer startet sicher (requestAnimationFrame)
-// - Audio spricht Operator zuverlässig (Queue)
-// - Space & Wiederholen sprechen Aufgabe erneut
-// - Bestenliste pro Modus (ohne Composite-Index nötig)
-// - Speichern nach 10 richtigen Aufgaben
+// - Audio spricht Operator zuverlässig (Queue + kleiner Delay)
+// - Enter = prüfen, Space = wiederholen
+// - Bestenliste pro Modus (Firestore), speichern nach 10 richtigen
 // ===============================
 
 const $ = (id) => document.getElementById(id);
@@ -36,7 +35,7 @@ let correct = 0;
 let wrong = 0;
 let streak = 0;
 
-// -------- Timing (Anzeige pro Aufgabe)
+// -------- Timing
 let startTime = 0;
 let rafId = 0;
 
@@ -44,7 +43,7 @@ let rafId = 0;
 let totalSolvedTime = 0;
 let totalSolvedCount = 0;
 
-// -------- Scoreboard Session (für Firestore, nach 10 richtigen Aufgaben)
+// -------- Scoreboard Session (nach 10 richtigen Aufgaben)
 const MIN_TASKS_FOR_SCORE = 10;
 let sessionSolvedTime = 0;
 let sessionSolvedCount = 0;
@@ -53,7 +52,7 @@ let sessionSolvedCount = 0;
 let currentTask = null;
 
 // ===============================
-// Utilities
+// Utils
 // ===============================
 function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -82,11 +81,13 @@ function stopTimer() {
 function startTimer() {
   stopTimer();
   startTime = performance.now();
+
   const loop = () => {
     const sec = (performance.now() - startTime) / 1000;
     setTimeUI(sec);
     rafId = requestAnimationFrame(loop);
   };
+
   rafId = requestAnimationFrame(loop);
 }
 
@@ -119,13 +120,14 @@ function speak(text) {
 function processSpeakQueue() {
   if (!voicesReady) return;
   if (speaking) return;
+
   const text = speakQueue.shift();
   if (!text) return;
 
   speaking = true;
   speechSynthesis.cancel();
 
-  // kleiner Delay verhindert "verschluckte" Operatoren
+  // kleiner Delay verhindert, dass Operatoren manchmal verschluckt werden
   setTimeout(() => {
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "de-DE";
@@ -145,7 +147,7 @@ function processSpeakQueue() {
 }
 
 // ===============================
-// Task generation
+// Aufgaben-Generator
 // ===============================
 function pickActualMode() {
   const m = modeSel.value;
@@ -177,7 +179,7 @@ function makeTask() {
     return { mode: m, text: `${a} mal ${b}`, solution: a * b };
   }
 
-  // div ohne Rest
+  // Division ohne Rest
   const b = randInt(1, Math.max(1, Math.floor(max / 2)));
   const q = randInt(0, max);
   const a = b * q;
@@ -199,7 +201,7 @@ function startNewTask() {
 }
 
 // ===============================
-// Firebase helpers
+// Firebase / Firestore
 // ===============================
 function waitForFirebaseReady(timeoutMs = 8000) {
   return new Promise((resolve, reject) => {
@@ -225,7 +227,7 @@ function getPlayerName() {
   return name;
 }
 
-// Bestenliste ohne where+orderBy (vermeidet Index-Probleme)
+// Laden ohne where+orderBy Kombination (vermeidet Index-Probleme)
 async function loadLeaderboard() {
   lbErrEl.textContent = "";
   lbModeEl.textContent = `Modus: ${modeSel.value}`;
@@ -288,6 +290,7 @@ async function saveScoreAfter10() {
       createdAt: window.fs.serverTimestamp()
     });
 
+    // Session reset
     sessionSolvedTime = 0;
     sessionSolvedCount = 0;
 
@@ -299,13 +302,14 @@ async function saveScoreAfter10() {
 }
 
 // ===============================
-// Check answer
+// Antwort prüfen
 // ===============================
 function checkAnswer() {
   if (!currentTask) return;
 
   const raw = String(answerEl.value).trim().replace(",", ".");
   const val = Number(raw);
+
   if (!Number.isFinite(val)) {
     speak("Bitte eine Zahl eingeben.");
     return;
